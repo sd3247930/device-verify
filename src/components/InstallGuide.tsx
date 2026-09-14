@@ -36,7 +36,7 @@ const NOTE_PARAGRAPHS: Array<{ title: string; body: string }> = [
   },
   {
     title: '数据迁移与安装提示：',
-    body: '先在本页点“导出设备清单”保存文件，装好 APK 后，在 APK 里点“导入设备清单”即可完成数据迁移。安装时若被 MagicOS、MIUI、ColorOS 等国产 ROM 拦截，请允许“安装未知应用”并选择继续安装。',
+    body: '先在本页点“下载应用（APK）”，装好 APK 后，在 APK 里点“导入设备清单”即可完成数据迁移。安装时若被 MagicOS、MIUI、ColorOS 等国产 ROM 拦截，请允许“安装未知应用”并选择继续安装。',
   },
 ]
 
