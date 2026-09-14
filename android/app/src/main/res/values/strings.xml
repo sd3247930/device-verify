@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">设备校验提醒器</string>
+    <string name="offline_hint">当前无法联网，正在显示离线内容</string>
+    <string name="retry">重试联网</string>
+</resources>
