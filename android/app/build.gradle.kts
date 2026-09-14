@@ -64,14 +64,14 @@ android {
 }
 
 /**
- * 把网页构建产物 (../dist) 复制进 assets/www，作为断网时的兜底页面。
+ * 把网页构建产物 (../dist) 复制进 assets/offline，作为断网时的兜底页面。
  * 目录不存在时直接跳过（例如尚未执行 npm run build）。
  */
 val webDist = rootProject.projectDir.parentFile.resolve("dist")
 val copyWebAssets = tasks.register<Copy>("copyWebAssets") {
     onlyIf { webDist.isDirectory }
     from(webDist)
-    into(layout.projectDirectory.dir("src/main/assets/www"))
+    into(layout.projectDirectory.dir("src/main/assets/offline"))
 }
 
 tasks.matching { it.name == "preBuild" }.configureEach {
@@ -80,5 +80,4 @@ tasks.matching { it.name == "preBuild" }.configureEach {
 
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.webkit:webkit:1.12.1")
 }

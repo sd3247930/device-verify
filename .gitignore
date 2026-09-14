@@ -13,4 +13,4 @@ android/local.properties
 android/keystore.properties
 android/app/release.keystore
 # 构建时由 Gradle 从 ../dist 复制进来，不入库
-android/app/src/main/assets/www
+android/app/src/main/assets/offline
