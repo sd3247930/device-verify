@@ -37,6 +37,35 @@ export default function SelfCheck() {
         ),
       })
 
+      // 是否真的装过：只有 getInstalledRelatedApps() 返回非空才算证据
+      const nav = navigator as Navigator & {
+        getInstalledRelatedApps?: () => Promise<Array<Record<string, unknown>>>
+      }
+      if (typeof nav.getInstalledRelatedApps === 'function') {
+        try {
+          const apps = await nav.getInstalledRelatedApps()
+          out.push({
+            label: '已安装记录（getInstalledRelatedApps）',
+            value: apps.length
+              ? apps.map((a) => `${a.platform ?? 'app'}:${a.id ?? a.url ?? ''}`).join(' , ')
+              : '无（0 条）',
+            ok: apps.length === 0,
+          })
+        } catch (e) {
+          out.push({ label: '已安装记录（getInstalledRelatedApps）', value: `查询失败：${String(e)}` })
+        }
+      } else {
+        out.push({
+          label: '已安装记录（getInstalledRelatedApps）',
+          value: '当前浏览器不支持该 API',
+        })
+      }
+
+      out.push({
+        label: '是否支持 beforeinstallprompt 能力',
+        value: 'beforeinstallprompt' in window ? 'API 存在（不等于会触发）' : 'API 不存在',
+      })
+
       // Service Worker
       const swSupported = 'serviceWorker' in navigator
       out.push({ label: '支持 Service Worker', value: String(swSupported), ok: swSupported })

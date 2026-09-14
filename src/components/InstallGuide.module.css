@@ -46,6 +46,13 @@
   background: rgba(255, 255, 255, 0.16);
 }
 
+.btnApk {
+  background: #16a34a;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
 .close {
   background: transparent;
   border: none;

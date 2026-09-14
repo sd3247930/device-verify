@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { formatDate, genId, getDaysDiff, getRemindLevel } from '../utils/helpers'
+import DataTransfer from '../components/DataTransfer'
 import styles from './ReminderPage.module.css'
 
 /** 设备数据结构 */
-interface Device {
+export interface Device {
   id: string
   name: string
   date: string // YYYY-MM-DD
@@ -250,6 +251,9 @@ export default function ReminderPage() {
         <br />
         数据保存在本机浏览器中，关闭页面不丢失。
       </div>
+
+      {/* 导出 / 导入：网页版与手机 App 的存储互相独立，用 JSON 搬运 */}
+      <DataTransfer devices={devices} onChange={(list) => setDevices(list)} />
 
       {/* 页内确认对话框（替代原生 confirm） */}
       {pending && (
