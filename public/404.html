@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>跳转中…</title>
+    <script>
+      // 本应用是单页应用，正常只有 /device-verify/ 一个入口。
+      // 万一被访问到其它子路径，直接回到应用根路径。
+      location.replace('/device-verify/')
+    </script>
+  </head>
+  <body>
+    <p>正在跳转到「设备校验提醒器」…</p>
+  </body>
+</html>

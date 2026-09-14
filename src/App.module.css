@@ -1,0 +1,89 @@
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+  padding-top: max(10px, env(safe-area-inset-top));
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.logo {
+  font-size: 1.1rem;
+}
+
+.brandText {
+  font-weight: 700;
+  color: var(--primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.installBtn {
+  flex: none;
+  border: none;
+  border-radius: 999px;
+  padding: 7px 14px;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.82rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px 14px 20px;
+}
+
+.checkWrap {
+  margin-top: 10px;
+}
+
+.checkToggle {
+  width: 100%;
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--text-sub);
+  border-radius: var(--radius-sm);
+  padding: 9px;
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.footer {
+  text-align: center;
+  color: var(--text-light);
+  font-size: 0.72rem;
+  /* 由 InstallGuide 实测底栏高度写入 --install-bar-height，避免被固定底栏盖住 */
+  padding: 8px 14px calc(var(--install-bar-height, 110px) + env(safe-area-inset-bottom));
+  line-height: 1.7;
+}
+
+.footerTip {
+  color: var(--text-sub);
+}
