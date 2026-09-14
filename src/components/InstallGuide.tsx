@@ -25,18 +25,22 @@ type BrowserKind =
 /** 顶栏「安装」按钮通过该事件唤起引导 */
 export const OPEN_INSTALL_GUIDE = 'device-verify-open-install-guide'
 
-/** 独立 APK 的下载页 */
-const APK_URL = 'https://github.com/sd3247930/device-verify/releases/latest'
+/**
+ * 独立 APK 直链：固定名产物 device-verify.apk（workflow 额外产出一份固定名），
+ * 走 releases/latest 路径 → 以后升版不必再改这里。
+ */
+const APK_URL =
+  'https://github.com/sd3247930/device-verify/releases/latest/download/device-verify.apk'
+
+/** 下载时保存的文件名 */
+const APK_FILENAME = 'device-verify.apk'
 
 /**
- * 忽略标记独立命名，避免与同源的「四合一工具集」共用同一个 localStorage 键：
- * 同源 → 存储共享，若沿用 install_guide_dismissed，
- * 用户在工具集点过一次 ✕，本应用装上后就永远不会显示安装入口。
+ * 历史版本用过的「不再提示」标记键名。
+ * 新版改为「点击右上角安装按钮才弹面板」，该标记已废弃；
+ * 仍在挂载时清理一次，避免老用户刷新后以为安装入口消失了。
  */
 const DISMISS_KEY = 'device_verify_install_guide_dismissed'
-
-/** 等待 beforeinstallprompt 的兜底时间（只用于把 UI 从「等待中」切到「步骤」） */
-const PROMPT_WAIT_MS = 1500
 
 function detectBrand(ua: string): Brand {
   if (/HONOR|MagicOS/i.test(ua)) return 'honor'
@@ -221,6 +225,17 @@ const ROM_TIPS: Partial<Record<Brand, string>> = {
   samsung: '三星：若装完无法独立启动，请在「设置 → 应用程序 → 该应用 → 电池」取消限制。',
 }
 
+/**
+ * 每个环境都要展示的 4 点说明（决策文档「文字说明要点」）：
+ * 为什么需要 APK / 安装后得到什么 / 数据如何迁移 / 国产 ROM 提示。
+ */
+const NOTES: string[] = [
+  '为什么要装 APK：浏览器只能给「快捷方式」，点开还是在浏览器里；要做成可独立启动的 App，需要安装 APK。',
+  '安装后能得到什么：主屏出现独立图标，打开无地址栏，断网也能用（数据仍保存在本机）。',
+  '数据怎么搬过去：先在本页点「导出设备清单」保存文件，装好 APK 后在 APK 里点「导入设备清单」即可。',
+  '国产 ROM 提示：安装时若被 MagicOS / MIUI / ColorOS 等拦截，请允许「安装未知应用」并选择继续安装。',
+]
+
 export default function InstallGuide() {
   const ua = navigator.userAgent
   const brand = useMemo(() => detectBrand(ua), [ua])
@@ -230,15 +245,21 @@ export default function InstallGuide() {
   const inApp = IN_APP.includes(browser)
 
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null)
-  const [waited, setWaited] = useState(false)
-  const [dismissed, setDismissed] = useState(() => localStorage.getItem(DISMISS_KEY) === '1')
-  const [expanded, setExpanded] = useState(false)
+  /** 面板默认关闭：仅点右上角「📲 安装」时弹出（决策 B①，避免常驻底栏遮挡表单） */
+  const [open, setOpen] = useState(false)
   const [standalone, setStandalone] = useState(false)
   const [copied, setCopied] = useState(false)
   const [failed, setFailed] = useState(false)
-  /** 「已安装」的唯一依据：getInstalledRelatedApps() 的返回结果 */
-  const [installedApps, setInstalledApps] = useState<unknown[] | null>(null)
   const [barEl, setBarEl] = useState<HTMLDivElement | null>(null)
+
+  /** 清掉历史版本的「不再提示」标记：保证刷新后安装入口照常显示 */
+  useEffect(() => {
+    try {
+      localStorage.removeItem(DISMISS_KEY)
+    } catch {
+      /* 隐私模式忽略 */
+    }
+  }, [])
 
   /**
    * 底栏是 fixed 定位，会压住页面最底部的内容。
@@ -280,63 +301,30 @@ export default function InstallGuide() {
     return () => queries.forEach((q) => q.removeEventListener('change', sync))
   }, [])
 
-  /** 用真实 API 判断「是否已经装过」，而不是靠计时器猜 */
-  useEffect(() => {
-    const nav = navigator as Navigator & {
-      getInstalledRelatedApps?: () => Promise<unknown[]>
-    }
-    if (typeof nav.getInstalledRelatedApps !== 'function') {
-      setInstalledApps(null)
-      return
-    }
-    let cancelled = false
-    nav
-      .getInstalledRelatedApps()
-      .then((apps) => {
-        if (!cancelled) setInstalledApps(apps)
-      })
-      .catch(() => {
-        if (!cancelled) setInstalledApps(null)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
   /** 捕获原生安装能力 */
   useEffect(() => {
     const onPrompt = (e: Event) => {
       e.preventDefault()
       setDeferred(e as BeforeInstallPromptEvent)
-      setWaited(true)
     }
+    const onInstalled = () => setDeferred(null)
     window.addEventListener('beforeinstallprompt', onPrompt)
-    window.addEventListener('appinstalled', () => setDeferred(null))
-    const timer = window.setTimeout(() => setWaited(true), PROMPT_WAIT_MS)
+    window.addEventListener('appinstalled', onInstalled)
     return () => {
       window.removeEventListener('beforeinstallprompt', onPrompt)
-      window.clearTimeout(timer)
+      window.removeEventListener('appinstalled', onInstalled)
     }
   }, [])
 
-  /** 顶栏「安装」按钮随时可以重新唤起引导（即使之前点过 ✕） */
+  /** 顶栏「安装」按钮唤起引导面板（决策 B①：唯一打开入口） */
   useEffect(() => {
-    const open = () => {
-      setDismissed(false)
-      setExpanded(true)
-    }
-    window.addEventListener(OPEN_INSTALL_GUIDE, open)
-    return () => window.removeEventListener(OPEN_INSTALL_GUIDE, open)
+    const onOpen = () => setOpen(true)
+    window.addEventListener(OPEN_INSTALL_GUIDE, onOpen)
+    return () => window.removeEventListener(OPEN_INSTALL_GUIDE, onOpen)
   }, [])
 
-  const dismiss = () => {
-    setDismissed(true)
-    try {
-      localStorage.setItem(DISMISS_KEY, '1')
-    } catch {
-      /* 隐私模式忽略 */
-    }
-  }
+  /** 关闭面板：只关本次，不写任何持久标记 */
+  const close = () => setOpen(false)
 
   const install = async () => {
     if (!deferred) return
@@ -346,12 +334,10 @@ export default function InstallGuide() {
       setDeferred(null)
       if (choice.outcome !== 'accepted') {
         setFailed(true)
-        setExpanded(true)
       }
     } catch {
       setDeferred(null)
       setFailed(true)
-      setExpanded(true)
     }
   }
 
@@ -367,87 +353,97 @@ export default function InstallGuide() {
 
   if (standalone) return null
 
-  // 安装过程中不能调用 prompt() 的场景
+  // 决策 B①：默认不渲染，只有点击右上角「📲 安装」才弹出，避免常驻底栏遮挡表单
+  if (!open) return null
+
+  // 能直接调用原生安装弹窗的环境（Chrome / 支持 beforeinstallprompt）
   const canPrompt = !!deferred && !inApp && !isIOS
-  // 明确知道当前浏览器装不了独立应用
+  // 明确装不成独立应用的浏览器
   const cannotInstall =
     inApp || browser === 'firefox' || !supportsInstallToHomeScreen(browser, android)
-  // 只有 API 真的返回了记录，才说「已经装过」
-  const reallyInstalled = Array.isArray(installedApps) && installedApps.length > 0
   const guide = manualSteps(browser, isIOS, android)
   const tip = ROM_TIPS[brand]
-  const stepsVisible = expanded || inApp
 
-  // 用户点过「不再提示」后完全隐藏；顶栏「📲 安装」仍可唤回
-  if (dismissed) return null
+  // 面板标题按环境分支（Edge 安卓 / 国产浏览器 → 主推下载独立 APK）
+  const title = canPrompt || isIOS ? '📲 安装到主屏，可离线使用' : '📥 下载独立 APK 安装'
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.card} ref={setBarEl}>
+      {/* 遮罩：点空白处关闭 */}
+      <div className={styles.backdrop} onClick={close} />
+
+      <div className={styles.card} ref={setBarEl} role="dialog" aria-modal="true" aria-label="安装引导">
         <div className={styles.row}>
-          <span className={styles.text}>
-            {canPrompt
-              ? '📲 安装到主屏，可离线使用'
-              : `📲 安装到主屏（当前：${browserName(browser, android)}）`}
-          </span>
-
-          {canPrompt ? (
-            <button className={styles.btn} onClick={install}>
-              安装到主屏
-            </button>
-          ) : (
-            <button className={styles.btn} onClick={() => setExpanded((v) => !v)}>
-              {stepsVisible ? '收起步骤' : '查看安装步骤'}
-            </button>
-          )}
-
-          <button className={styles.close} onClick={dismiss} aria-label="不再提示">
+          <span className={styles.text}>{title}</span>
+          <button className={styles.close} onClick={close} aria-label="关闭">
             ✕
           </button>
         </div>
 
-        {stepsVisible && (
-          <div className={styles.steps}>
-            <div className={styles.stepsTitle}>{guide.title}</div>
-            <ol>
-              {guide.steps.map((s) => (
-                <li key={s}>{s}</li>
-              ))}
-            </ol>
+        <div className={styles.actions}>
+          {canPrompt && (
+            <button className={styles.btn} onClick={install}>
+              安装到主屏
+            </button>
+          )}
 
-            <div className={styles.actions}>
-              <button className={`${styles.btn} ${styles.btnGhost}`} onClick={copyLink}>
-                {copied ? '已复制 ✓' : '复制网址'}
-              </button>
-              {(guide.showApkHint || cannotInstall) && (
-                <a
-                  className={`${styles.btn} ${styles.btnApk}`}
-                  href={APK_URL}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  ⬇ 下载独立 APK
-                </a>
-              )}
-            </div>
+          {/* 主按钮：直链 APK（决策 A② 保留下载直链） */}
+          <a
+            className={`${styles.btn} ${styles.btnDownload}`}
+            href={APK_URL}
+            download={APK_FILENAME}
+            rel="noreferrer"
+          >
+            📥 下载应用（APK）
+          </a>
 
-            {tip && <div className={styles.tip}>{tip}</div>}
+          {!canPrompt && (
+            <button className={`${styles.btn} ${styles.btnGhost}`} onClick={copyLink}>
+              {copied ? '已复制 ✓' : '复制网址'}
+            </button>
+          )}
+        </div>
+
+        {isIOS && <div className={styles.tip}>iOS 请点浏览器「分享」按钮 → 选择「添加到主屏幕」。</div>}
+
+        <div className={styles.steps}>
+          <div className={styles.stepsTitle}>{guide.title}</div>
+          <ol>
+            {guide.steps.map((s) => (
+              <li key={s}>{s}</li>
+            ))}
+          </ol>
+        </div>
+
+        {/* 4 点说明：为什么装 APK / 装完得到什么 / 数据怎么搬 / 国产 ROM 提示 */}
+        <div className={styles.notes}>
+          <div className={styles.blockTitle}>说明</div>
+          <ul>
+            {NOTES.map((n) => (
+              <li key={n}>{n}</li>
+            ))}
+          </ul>
+        </div>
+
+        {/*
+          暂时隐藏旧下载入口，改用上方「下载应用」直链（决策 A②）
+          <a className={`${styles.btn} ${styles.btnApk}`} href="https://github.com/sd3247930/device-verify/releases/latest" target="_blank" rel="noreferrer">
+            ⬇ 下载独立 APK
+          </a>
+        */}
+
+        {tip && <div className={styles.tip}>{tip}</div>}
+
+        {cannotInstall && !canPrompt && (
+          <div className={styles.tip}>
+            {browserName(browser, android)}{' '}
+            不提供「安装应用」能力：想换 Chrome 可先点「复制网址」；想要独立图标与离线使用，直接点「📥 下载应用（APK）」。
           </div>
         )}
 
-        {!stepsVisible && waited && !canPrompt && (
+        {failed && (
           <div className={styles.tip}>
-            {reallyInstalled
-              ? '检测到本机已安装过本应用，所以浏览器不再提供安装入口。'
-              : cannotInstall
-                ? `${browserName(browser, android)} 不提供「安装应用」能力。点「查看安装步骤」换到 Chrome，或直接下载 APK。`
-                : '当前浏览器未提供自动安装入口，点「查看安装步骤」按提示操作即可。'}
-          </div>
-        )}
-
-        {failed && !canPrompt && (
-          <div className={styles.tip}>
-            自动安装未完成。可以再试一次，或按上面的步骤 / 下载 APK 安装。
+            自动安装未完成，可重试，或直接点「📥 下载应用（APK）」。
           </div>
         )}
       </div>

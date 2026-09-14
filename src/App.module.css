@@ -40,9 +40,14 @@
 
 .installBtn {
   flex: none;
+  /* 移动端触摸目标 ≥44px */
+  min-height: 44px;
   border: none;
   border-radius: 999px;
-  padding: 7px 14px;
+  padding: 11px 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: var(--primary);
   color: #fff;
   font-weight: 700;
@@ -59,28 +64,15 @@
   padding: 16px 14px 20px;
 }
 
-.checkWrap {
-  margin-top: 10px;
-}
-
-.checkToggle {
-  width: 100%;
-  border: 1px dashed var(--border);
-  background: transparent;
-  color: var(--text-sub);
-  border-radius: var(--radius-sm);
-  padding: 9px;
-  font-size: 0.8rem;
-  font-family: inherit;
-  cursor: pointer;
-}
-
 .footer {
   text-align: center;
   color: var(--text-light);
   font-size: 0.72rem;
-  /* 由 InstallGuide 实测底栏高度写入 --install-bar-height，避免被固定底栏盖住 */
-  padding: 8px 14px calc(var(--install-bar-height, 110px) + env(safe-area-inset-bottom));
+  /*
+   * 安装面板已改为「点击才弹出」的底部抽屉，静止时页面无人遮挡；
+   * 仍保留 --install-bar-height 兜底（面板打开时由 InstallGuide 写入实测高度）。
+   */
+  padding: 8px 14px calc(var(--install-bar-height, 16px) + env(safe-area-inset-bottom));
   line-height: 1.7;
 }
 

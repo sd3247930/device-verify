@@ -60,6 +60,10 @@ class MainActivity : Activity() {
             cacheMode = WebSettings.LOAD_DEFAULT
         }
 
+        // 给 WebView 的 UA 追加标记：网页据此识别「运行在 APK 内」，
+        // 从而隐藏右上角「📲 安装」入口（避免在 App 里让用户再下载一次自己）。
+        webView.settings.userAgentString = "${webView.settings.userAgentString} DeviceVerifyApp"
+
         webView.webViewClient = object : WebViewClient() {
 
             override fun shouldInterceptRequest(

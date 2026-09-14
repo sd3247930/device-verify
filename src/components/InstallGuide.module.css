@@ -1,13 +1,23 @@
 .wrap {
   position: fixed;
-  bottom: calc(12px + env(safe-area-inset-bottom));
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 50;
-  width: min(94vw, 460px);
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 0 calc(16px + env(safe-area-inset-bottom));
+}
+
+/* 遮罩：点击空白处关闭面板 */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
 }
 
 .card {
+  position: relative;
+  width: min(94vw, 460px);
   background: #1e293b;
   color: #fff;
   border-radius: 16px;
@@ -32,7 +42,12 @@
 .btn {
   border: none;
   border-radius: 999px;
-  padding: 9px 14px;
+  /* 移动端触摸目标 ≥44px */
+  min-height: 44px;
+  padding: 12px 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: var(--primary);
   color: #fff;
   font-weight: 700;
@@ -40,6 +55,7 @@
   cursor: pointer;
   white-space: nowrap;
   font-family: inherit;
+  text-decoration: none;
 }
 
 .btnGhost {
@@ -48,18 +64,25 @@
 
 .btnApk {
   background: #16a34a;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
+}
+
+/* 主按钮：直链下载独立 APK */
+.btnDownload {
+  background: #16a34a;
 }
 
 .close {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
   background: transparent;
   border: none;
   color: rgba(255, 255, 255, 0.6);
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   line-height: 1;
-  padding: 6px;
   cursor: pointer;
 }
 
@@ -88,8 +111,34 @@
 
 .actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 10px;
+}
+
+/* 4 点说明区 */
+.notes {
+  margin-top: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+
+.blockTitle {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.notes ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.notes li {
+  margin: 6px 0;
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .tip {

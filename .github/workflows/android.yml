@@ -90,6 +90,9 @@ jobs:
           set -e
           VERSION=$(grep -oP 'versionName = "\K[^"]+' android/app/build.gradle.kts)
           cp android/app/build/outputs/apk/release/app-release.apk "device-verify-${VERSION}.apk"
+          # 固定名产物：供网页永久直链 releases/latest/download/device-verify.apk
+          cp android/app/build/outputs/apk/release/app-release.apk device-verify.apk
+          sha256sum device-verify.apk | tee device-verify.apk.sha256
           sha256sum "device-verify-${VERSION}.apk" | tee "device-verify-${VERSION}.apk.sha256"
 
       - name: 上传 APK 产物
@@ -99,6 +102,8 @@ jobs:
           path: |
             device-verify-*.apk
             device-verify-*.apk.sha256
+            device-verify.apk
+            device-verify.apk.sha256
 
       - name: 发布 Release（仅打 tag 时）
         if: startsWith(github.ref, 'refs/tags/v')
@@ -107,4 +112,6 @@ jobs:
           files: |
             device-verify-*.apk
             device-verify-*.apk.sha256
+            device-verify.apk
+            device-verify.apk.sha256
           generate_release_notes: true
