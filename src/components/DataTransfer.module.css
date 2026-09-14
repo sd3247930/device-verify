@@ -42,15 +42,19 @@
 
 .textarea {
   width: 100%;
+  /* 显式给高度与内边距：避免长 JSON 时首行贴边或被裁掉 */
+  min-height: 140px;
+  max-height: 40vh;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 10px;
+  padding: 12px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.72rem;
-  line-height: 1.5;
+  line-height: 1.6;
   color: var(--text-main);
   background: #f8fafc;
   resize: vertical;
+  overflow: auto;
 }
 
 .btns {

@@ -36,6 +36,14 @@
   letter-spacing: 0.5px;
 }
 
+/* 日期框为空时的可见提示（type=date 在 Chrome/安卓不显示 placeholder） */
+.fieldHint {
+  margin-top: 6px;
+  font-size: 0.72rem;
+  color: var(--text-light);
+  line-height: 1.5;
+}
+
 .error {
   margin-top: 10px;
   font-size: 0.8rem;

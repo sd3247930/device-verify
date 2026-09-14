@@ -61,7 +61,8 @@
   width: 100%;
   max-width: 720px;
   margin: 0 auto;
-  padding: 16px 14px 20px;
+  /* 底部多留安全距离：安卓浏览器工具栏会盖住页面最底部内容 */
+  padding: 16px 14px calc(48px + env(safe-area-inset-bottom));
 }
 
 .footer {

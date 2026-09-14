@@ -134,6 +134,8 @@ export default function ReminderPage() {
                 className="input"
                 type="date"
                 value={editingDate}
+                placeholder="请选择日期"
+                aria-label="选择新的校验日期"
                 onChange={(e) => setEditingDate(e.target.value)}
               />
               <button className={styles.smallBtnPrimary} onClick={commitEdit}>
@@ -202,11 +204,15 @@ export default function ReminderPage() {
               className="input"
               type="date"
               value={date}
+              placeholder="请选择下次校验日期"
+              aria-label="下次校验日期"
               onChange={(e) => {
                 setDate(e.target.value)
                 setError('')
               }}
             />
+            {/* type=date 在 Chrome / 安卓上不渲染 placeholder，这里用可见提示兜底 */}
+            {!date && <p className={styles.fieldHint}>请选择下次校验日期（点右侧日历图标）</p>}
           </div>
           <button className="btn btn-primary" onClick={addDevice}>
             ➕ 添加设备

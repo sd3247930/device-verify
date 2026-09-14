@@ -31,6 +31,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  /* 标题与关闭键固定同一行，避免窄屏下 ✕ 被挤到下一行 */
+  flex-wrap: nowrap;
 }
 
 .text {
@@ -131,14 +133,14 @@
   margin-bottom: 6px;
 }
 
-.notes ul {
-  margin: 0;
-  padding-left: 18px;
+.notes p {
+  margin: 0 0 12px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.88);
 }
 
-.notes li {
-  margin: 6px 0;
-  color: rgba(255, 255, 255, 0.88);
+.notes p:last-child {
+  margin-bottom: 0;
 }
 
 .tip {
@@ -149,11 +151,10 @@
 }
 
 @media (max-width: 420px) {
-  .row {
-    align-items: flex-start;
-    flex-wrap: wrap;
-  }
   .text {
-    flex: 1 1 100%;
+    font-size: 0.9rem;
+  }
+  .card {
+    padding: 12px;
   }
 }
